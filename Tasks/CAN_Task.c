@@ -1,13 +1,6 @@
-/*
- * CAN_Task.c
- *
- *  Created on: Apr 3, 2019
- *      Author: AVE-LAP-040
- */
 /*Includes Related To FreeRTOS*/
 #include <FreeRTOS.h>
 #include "task.h"
-
 /*Includes Related To Tivaware*/
 #include <stdbool.h>
 #include <stdint.h>
@@ -24,6 +17,8 @@
 /*Includes Related To The Task*/
 #include "LEDS.h"
 #include "CAN_Task.h"
+/*Include Buttons Driver*/
+#include "Switch_Driver.h"
 /* A counter that keeps track of the number of times the TX interrupt has */
 /* occurred, which should match the number of TX messages that were sent */
 volatile uint32_t g_ui32MsgCount = 0;
@@ -41,7 +36,7 @@ volatile bool g_bRXFlag2 = 0;
 /*Variable To Handle State*/
 uint8_t State = START_UP_STATE;
 
-/*Variables To Hold Source And Destionation*/
+/*Variables To Hold Source And Destionation OF Node*/
 uint8_t Source = 1;
 uint8_t Destionation = 2;
 
@@ -160,47 +155,44 @@ void Can_Recive_Init()
     }
 }
 
-void Can_Task_Send(void)
+void Can_Send(uint8_t Source_Node, uint8_t Destination_Node)
 {
-    while (1)
+    //
+    // Print a message to the console showing the message count and the
+    // contents of the message being sent.
+    //
+    pui8MsgData = (uint8_t *) &ui32MsgData;
+
+    /*Set PDU Message Data && this is one byte*/
+
+    /*Set Destination On First Mail Box*/
+    pui8MsgData[0] = Source;
+    pui8MsgData[1] = Destionation;
+    pui8MsgData[2] = Token;
+    //
+    // Send the CAN message using object number 1 (not the same thing as
+    // CAN ID, which is also 1 in this example).  This function will cause
+    // the message to be transmitted right away.
+    //
+    CANMessageSet(CAN0_BASE, 1, &sCANMessage, MSG_OBJ_TYPE_TX);
+    if (g_bErrFlag)
     {
-        //
-        // Print a message to the console showing the message count and the
-        // contents of the message being sent.
-        //
-        pui8MsgData = (uint8_t *) &ui32MsgData;
-
-
-
-        /*Set PDU Message Data && this is one byte*/
-        /*Set Destination At Last 4 Bits*/
-        ui32MsgData = 0xFFFFFFFF;
-        //
-        // Send the CAN message using object number 1 (not the same thing as
-        // CAN ID, which is also 1 in this example).  This function will cause
-        // the message to be transmitted right away.
-        //
-        CANMessageSet(CAN0_BASE, 1, &sCANMessage, MSG_OBJ_TYPE_TX);
-        if (g_bErrFlag)
-        {
-            UARTprintf(" error - cable connected?\n");
-        }
-        else
-        {
-            UARTprintf("Sending msg: 0x%02X %02X %02X %02X", pui8MsgData[0],
-                               pui8MsgData[1], pui8MsgData[2], pui8MsgData[3]);
-            //
-            // If no errors then print the count of message sent
-            //
-            UARTprintf(" total count = %u\n", g_ui32MsgCount);
-        }
-
-        //
-        // Increment the value in the message data.
-        //
-        ui32MsgData++;
-        vTaskDelay(100);
+        UARTprintf(" error - cable connected?\n");
     }
+    else
+    {
+        UARTprintf("Sending msg: 0x%02X %02X %02X %02X", pui8MsgData[0],
+                   pui8MsgData[1], pui8MsgData[2], pui8MsgData[3]);
+        //
+        // If no errors then print the count of message sent
+        //
+        UARTprintf(" total count = %u\n", g_ui32MsgCount);
+    }
+
+    //
+    // Increment the value in the message data.
+    //
+    ui32MsgData++;
 }
 
 void Can_Task_Recive(void)
@@ -235,9 +227,10 @@ void Can_Task_Recive(void)
             //
             // Print information about the message just received.
             //
-            UARTprintf("Reciving msg: 0x%02X %02X %02X %02X", pui8MsgData_Recived[0],
-                                           pui8MsgData_Recived[1], pui8MsgData_Recived[2], pui8MsgData_Recived[3]);
-                    UARTprintf(" total count = %u\n", g_ui32MsgCountRx);
+            UARTprintf("Reciving msg: 0x%02X %02X %02X %02X",
+                       pui8MsgData_Recived[0], pui8MsgData_Recived[1],
+                       pui8MsgData_Recived[2], pui8MsgData_Recived[3]);
+            UARTprintf(" total count = %u\n", g_ui32MsgCountRx);
 
         }
 
@@ -252,20 +245,43 @@ void Token_Task()
         if (State == START_UP_STATE)
         {
             led1_on();
-            State = NORMAL_STATE;
             vTaskDelay(1000);
         }
         else
         {
             led1_off();
         }
-
-        /*Check If Source iS Zero*/
-        if ( pui8MsgData_Recived[0] == 0xFF)
+        /*If Switch 0 Pressed On First Node Send Token To The Next Node And Intalize Other Nodes*/
+        if (Switch0_Read() == 1)
         {
-            led2_on();
+            /*Send Token To The First Node*/
+            Can_Send(Source, Source + 1);
         }
-        vTaskDelay(5);
+        /*Check If Source Node iS Zero*/
+        /*This Is Node Number 1*/
+        if (pui8MsgData_Recived[0] == SOURCE_NUM_ZERO)
+        {
+            /*Turn On Led That We Have Recived Token*/
+            State = NORMAL_STATE;
+            led2_on();
+            vTaskDelay(1000);
+            /*If Second Button Pressed Change Direction*/
+            if (Switch1_Read() == 1)
+            {
+                /*Send token To The Previous Node*/
+                Can_Send(Source, Source - 1);
+                led2_off();
+            }
+            else
+            {
+                /*Send token To The Next Node*/
+                Can_Send(Source, Source + 1);
+                led2_off();
+            }
+        }
+        /*Todo If Ack Doens't Come From Next Node Send To The Next OF Next and So On Until Ack Recived*/
+
+        vTaskDelay(10);
     }
 
 }
@@ -313,7 +329,6 @@ void CANIntHandler(void)
         // message object interrupt.
         //
         CANIntClear(CAN0_BASE, 1);
-
 
         //
         // Increment a counter to keep track of how many messages have been

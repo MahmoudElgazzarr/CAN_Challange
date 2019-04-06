@@ -12,6 +12,7 @@
 #include "Task.h"
 #include "led_task.h"
 #include "CAN_Task.h"
+#include "Switch_Driver.h"
 
 #ifdef DEBUG
 void
@@ -30,6 +31,10 @@ int main(void)
 
     /*Inatalize UART*/
     InitConsole();
+
+    /*Initalize Buttons*/
+    Switch_init();
+
     /*Init Task For Can Send*/
     xTaskCreate(Can_Send_Init, (const portCHAR *) "CAN_Init", 128, NULL, 15,NULL);
 
@@ -43,7 +48,7 @@ int main(void)
     xTaskCreate(Token_Task, (const portCHAR *) "Token Task", 128, NULL, 4,NULL);
 
     /*Task For CAN*/
-    xTaskCreate(Can_Task_Send, (const portCHAR *) "CAN Task Send", 128, NULL, 5 ,NULL);
+    //xTaskCreate(Can_Task_Send, (const portCHAR *) "CAN Task Send", 128, NULL, 5 ,NULL);
 
     /*Task For CAN*/
     xTaskCreate(Can_Task_Recive, (const portCHAR *) "CAN Task Receive", 128, NULL, 6 ,NULL);
