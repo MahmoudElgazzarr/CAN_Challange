@@ -11,6 +11,7 @@
 #include "utils/uartstdio.h"
 #include "Task.h"
 #include "led_task.h"
+#include "CAN_Driver.h"
 #include "CAN_Task.h"
 #include "Switch_Driver.h"
 
@@ -35,11 +36,11 @@ int main(void)
     /*Initalize Buttons*/
     Switch_init();
 
-    /*Init Task For Can Send*/
-    xTaskCreate(Can_Send_Init, (const portCHAR *) "CAN_Init", 128, NULL, 15,NULL);
+    /*Init Can Send*/
+    Can_Send_Init();
 
-    /*Init Task For Can Recive*/
-    xTaskCreate(Can_Recive_Init, (const portCHAR *) "CAN_Init", 128, NULL, 14 ,NULL);
+    /*Init Can Recive*/
+    Can_Recive_Init();
 
     /*Create Init Task For Led*/
     xTaskCreate(LEDS_Task_init, (const portCHAR *) "LED_Init", 128, NULL, 13, NULL);

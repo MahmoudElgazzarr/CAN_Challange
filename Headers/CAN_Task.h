@@ -32,10 +32,7 @@ enum
     START_UP_STATE, NORMAL_STATE
 };
 
-/*Can Tasks*/
-void Can_Send_Init(void);
-void Can_Recive_Init(void);
-void Can_Send(uint8_t Source_Node , uint8_t Destination_Node);
+/*Can Task*/
 void Can_Task_Recive(void);
 
 /*Task To Check For Token And Set State Of System*/
