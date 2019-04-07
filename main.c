@@ -46,13 +46,10 @@ int main(void)
     xTaskCreate(LEDS_Task_init, (const portCHAR *) "LED_Init", 128, NULL, 13, NULL);
 
     /*add Task 1 for led1*/
-    xTaskCreate(Token_Task, (const portCHAR *) "Token Task", 128, NULL, 4,NULL);
+    xTaskCreate(Token_Task, (const portCHAR *) "Token Task", 150 , NULL, 4 ,NULL);
 
     /*Task For CAN*/
-    //xTaskCreate(Can_Task_Send, (const portCHAR *) "CAN Task Send", 128, NULL, 5 ,NULL);
-
-    /*Task For CAN*/
-    xTaskCreate(Can_Task_Recive, (const portCHAR *) "CAN Task Receive", 128, NULL, 6 ,NULL);
+    xTaskCreate(Can_Task_Recive, (const portCHAR *) "CAN Task Receive", 150 , NULL, 6 ,NULL);
 
     /*Start Schedular*/
     vTaskStartScheduler();

@@ -8,6 +8,14 @@
 #ifndef HEADERS_CAN_TASK_H_
 #define HEADERS_CAN_TASK_H_
 
+/*Typedef For Node Struct*/
+typedef struct Node
+{
+    uint8_t Previous_Source;
+    uint8_t This_Node;
+    uint8_t Destionation_Node;
+}Node_T;
+
 /*Definiations For Source Numbers*/
 #define SOURCE_NUM_ZERO 0
 #define SOURCE_NUM_ONE 1

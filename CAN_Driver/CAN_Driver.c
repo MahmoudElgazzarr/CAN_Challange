@@ -27,6 +27,10 @@ volatile uint32_t g_ui32MsgCount = 0;
 /* occurred, which should match the number of TX messages that were sent */
 volatile uint32_t g_ui32MsgCountRx = 0;
 
+/* A counter that keeps track of the number of times the RX interrupt has */
+/* occurred, which should match the number of TX messages that were sent */
+volatile uint32_t g_ui32AckCountRx = 0;
+
 /*A flag to indicate that some error occurred*/
 volatile bool g_bErrFlag = 0;
 
@@ -46,24 +50,24 @@ uint8_t *pui8MsgData_Recived;
 /*Can Recive Init*/
 void Can_Recive_Init()
 {
-        pui8MsgData_Recived = (uint8_t *) &ui32MsgData_Recived;
-        //
-        // Initialize a message object to receive CAN messages with ID 0x1001.
-        // The expected ID must be set along with the mask to indicate that all
-        // bits in the ID must match.
-        //
-        sCANMessage_Recived.ui32MsgID = 0x55;
-        sCANMessage_Recived.ui32MsgIDMask = 0xfffff;
-        sCANMessage_Recived.ui32Flags = (MSG_OBJ_RX_INT_ENABLE
-                | MSG_OBJ_USE_ID_FILTER);
-        sCANMessage_Recived.ui32MsgLen = 8;
+    pui8MsgData_Recived = (uint8_t *) &ui32MsgData_Recived;
+    //
+    // Initialize a message object to receive CAN messages with ID 0x1001.
+    // The expected ID must be set along with the mask to indicate that all
+    // bits in the ID must match.
+    //
+    sCANMessage_Recived.ui32MsgID = 0x55;
+    sCANMessage_Recived.ui32MsgIDMask = 0xfffff;
+    sCANMessage_Recived.ui32Flags = (MSG_OBJ_RX_INT_ENABLE
+            | MSG_OBJ_USE_ID_FILTER);
+    sCANMessage_Recived.ui32MsgLen = 8;
 
-        //
-        // Change the ID to 0x2001, and load into message object 2 which will be
-        // used for receiving any CAN messages with this ID.  Since only the CAN
-        // ID field changes, we don't need to reload all the other fields.
-        //
-        CANMessageSet(CAN0_BASE, 2, &sCANMessage_Recived, MSG_OBJ_TYPE_RX);
+    //
+    // Change the ID to 0x2001, and load into message object 2 which will be
+    // used for receiving any CAN messages with this ID.  Since only the CAN
+    // ID field changes, we don't need to reload all the other fields.
+    //
+    CANMessageSet(CAN0_BASE, 2, &sCANMessage_Recived, MSG_OBJ_TYPE_RX);
 }
 
 /*Can Recive Func*/
@@ -104,78 +108,78 @@ void Can_Recive(void)
 /*Can Send Init*/
 void Can_Send_Init(void)
 {
-        pui8MsgData = (uint8_t *) &ui32MsgData;
-        //
-        // For this example CAN0 is used with RX and TX pins on port B4 and B5.
-        // The actual port and pins used may be different on your part, consult
-        // the data sheet for more information.
-        // GPIO port B needs to be enabled so these pins can be used.
-        // TODO: change this to whichever GPIO port you are using
-        //
-        SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
+    pui8MsgData = (uint8_t *) &ui32MsgData;
+    //
+    // For this example CAN0 is used with RX and TX pins on port B4 and B5.
+    // The actual port and pins used may be different on your part, consult
+    // the data sheet for more information.
+    // GPIO port B needs to be enabled so these pins can be used.
+    // TODO: change this to whichever GPIO port you are using
+    //
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
 
-        //
-        // Configure the GPIO pin muxing to select CAN0 functions for these pins.
-        // This step selects which alternate function is available for these pins.
-        // This is necessary if your part supports GPIO pin function muxing.
-        // Consult the data sheet to see which functions are allocated per pin.
-        // TODO: change this to select the port/pin you are using
-        //
-        GPIOPinConfigure(GPIO_PB4_CAN0RX);
-        GPIOPinConfigure(GPIO_PB5_CAN0TX);
+    //
+    // Configure the GPIO pin muxing to select CAN0 functions for these pins.
+    // This step selects which alternate function is available for these pins.
+    // This is necessary if your part supports GPIO pin function muxing.
+    // Consult the data sheet to see which functions are allocated per pin.
+    // TODO: change this to select the port/pin you are using
+    //
+    GPIOPinConfigure(GPIO_PB4_CAN0RX);
+    GPIOPinConfigure(GPIO_PB5_CAN0TX);
 
-        //
-        // Enable the alternate function on the GPIO pins.  The above step selects
-        // which alternate function is available.  This step actually enables the
-        // alternate function instead of GPIO for these pins.
-        // TODO: change this to match the port/pin you are using
-        //
-        GPIOPinTypeCAN(GPIO_PORTB_BASE, GPIO_PIN_4 | GPIO_PIN_5);
+    //
+    // Enable the alternate function on the GPIO pins.  The above step selects
+    // which alternate function is available.  This step actually enables the
+    // alternate function instead of GPIO for these pins.
+    // TODO: change this to match the port/pin you are using
+    //
+    GPIOPinTypeCAN(GPIO_PORTB_BASE, GPIO_PIN_4 | GPIO_PIN_5);
 
-        //
-        // The GPIO port and pins have been set up for CAN.  The CAN peripheral
-        // must be enabled.
-        //
-        SysCtlPeripheralEnable(SYSCTL_PERIPH_CAN0);
+    //
+    // The GPIO port and pins have been set up for CAN.  The CAN peripheral
+    // must be enabled.
+    //
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_CAN0);
 
-        //
-        // Initialize the CAN controller
-        //
-        CANInit(CAN0_BASE);
-        /*Set Bit Rate*/
-        CANBitRateSet(CAN0_BASE, SysCtlClockGet(), 500000);
-        //
-        // Enable interrupts on the CAN peripheral.  This example uses static
-        // allocation of interrupt handlers which means the name of the handler
-        // is in the vector table of startup code.  If you want to use dynamic
-        // allocation of the vector table, then you must also call CANIntRegister()
-        // here.
-        //
-        // CANIntRegister(CAN0_BASE, CANIntHandler); // if using dynamic vectors
-        //
-        CANIntEnable(CAN0_BASE,
-                     CAN_INT_MASTER | CAN_INT_ERROR | CAN_INT_STATUS);
+    //
+    // Initialize the CAN controller
+    //
+    CANInit(CAN0_BASE);
+    /*Set Bit Rate*/
+    CANBitRateSet(CAN0_BASE, SysCtlClockGet(), 500000);
+    //
+    // Enable interrupts on the CAN peripheral.  This example uses static
+    // allocation of interrupt handlers which means the name of the handler
+    // is in the vector table of startup code.  If you want to use dynamic
+    // allocation of the vector table, then you must also call CANIntRegister()
+    // here.
+    //
+    // CANIntRegister(CAN0_BASE, CANIntHandler); // if using dynamic vectors
+    //
+    CANIntEnable(CAN0_BASE,
+    CAN_INT_MASTER | CAN_INT_ERROR | CAN_INT_STATUS);
 
-        //
-        // Enable the CAN interrupt on the processor (NVIC).
-        //
-        IntEnable(INT_CAN0);
+    //
+    // Enable the CAN interrupt on the processor (NVIC).
+    //
+    IntEnable(INT_CAN0);
 
-        //
-        // Enable the CAN for operation.
-        //
-        CANEnable(CAN0_BASE);
-        /*Set Mail Box That Will Send PDU Message*/
-        ui32MsgData = 0;
-        sCANMessage.ui32MsgID = 0x55;
-        sCANMessage.ui32MsgIDMask = 0;
-        sCANMessage.ui32Flags = MSG_OBJ_TX_INT_ENABLE;
-        sCANMessage.ui32MsgLen = 8;
-        sCANMessage.pui8MsgData = pui8MsgData;
+    //
+    // Enable the CAN for operation.
+    //
+    CANEnable(CAN0_BASE);
+    /*Set Mail Box That Will Send PDU Message*/
+    ui32MsgData = 0;
+    sCANMessage.ui32MsgID = 0x55;
+    sCANMessage.ui32MsgIDMask = 0;
+    sCANMessage.ui32Flags = MSG_OBJ_TX_INT_ENABLE;
+    sCANMessage.ui32MsgLen = 8;
+    sCANMessage.pui8MsgData = pui8MsgData;
 
 }
 
-void Can_Send(uint8_t Source_Node, uint8_t Destination_Node)
+void Can_Send(uint8_t Source_Node, uint8_t Destination_Node , uint8_t Ack)
 {
     //
     // Print a message to the console showing the message count and the
@@ -188,6 +192,7 @@ void Can_Send(uint8_t Source_Node, uint8_t Destination_Node)
     /*Set Destination On First Mail Box*/
     pui8MsgData[0] = Source_Node;
     pui8MsgData[1] = Destination_Node;
+    pui8MsgData[2] = Ack;
     //
     // Send the CAN message using object number 1 (not the same thing as
     // CAN ID, which is also 1 in this example).  This function will cause

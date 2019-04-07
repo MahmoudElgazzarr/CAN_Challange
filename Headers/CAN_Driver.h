@@ -37,7 +37,7 @@ extern uint8_t *pui8MsgData_Recived;
 
 void Can_Send_Init(void);
 void Can_Recive_Init(void);
-void Can_Send(uint8_t Source_Node , uint8_t Destination_Node);
+void Can_Send(uint8_t Source_Node, uint8_t Destination_Node , uint8_t Ack);
 void Can_Recive(void);
 
 
