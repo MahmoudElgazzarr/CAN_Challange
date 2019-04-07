@@ -13,8 +13,8 @@
 uint8_t State = START_UP_STATE;
 
 /*Variables To Hold Source And Destionation OF Node*/
-uint8_t Source = 2;
-uint8_t Destionation = 3;
+uint8_t Source = 3;
+uint8_t Destionation = 4;
 
 /*Variables To Hold Previous Node*/
 #define Previous_Source (Source - 1)
@@ -43,8 +43,6 @@ void Token_Task()
         if (State == START_UP_STATE)
         {
             led1_on();
-            led3_on();
-            vTaskDelay(1000);
         }
         /*If Switch 0 Pressed On First Node Send Token To The Next Node And Intalize Other Nodes*/
         if (Switch0_Read() == 1)
@@ -62,7 +60,7 @@ void Token_Task()
             /*Change State To Normal State*/
             State = NORMAL_STATE;
             led2_on();
-            vTaskDelay(1000);
+            vTaskDelay(100);
             /*If Second Button Pressed Change Direction*/
             if (Switch1_Read() == 1)
             {
@@ -84,7 +82,7 @@ void Token_Task()
             /*Change State To Normal State*/
             State = NORMAL_STATE;
             led2_on();
-            vTaskDelay(1000);
+            vTaskDelay(100);
             /*If Second Button Pressed Change Direction*/
             if (Switch1_Read() == 1)
             {
@@ -100,8 +98,7 @@ void Token_Task()
             }
         }
         /*Todo If Ack Doens't Come From Next Node Send To The Next OF Next and So On Until Ack Recived*/
-        led3_off();
-        vTaskDelay(1000);
+        vTaskDelay(100);
     }
 
 }
