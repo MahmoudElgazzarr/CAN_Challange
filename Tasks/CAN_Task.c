@@ -56,11 +56,11 @@ void Token_Task()
 
             /*Change State To Normal State*/
             State = NORMAL_STATE;
+            led1_off();
         }
         /*Check If Source Node iS Two*/
         /*This Is Node Number 1*/
-        if ((pui8MsgData_Recived[0] == Previous_Source)
-                && (pui8MsgData_Recived[1] == Source))
+        if (((pui8MsgData_Recived[0] == Previous_Source) ||(pui8MsgData_Recived[0] == 4 )) && (pui8MsgData_Recived[1] == Source))
         {
             /*Turn Off Led Of init State*/
             led1_off();
@@ -74,8 +74,8 @@ void Token_Task()
             if (Switch1_Read() == 1)
             {
                 /*Send token To The Previous Node*/
-                Can_Send(Source, Source - 1);
                 led2_off();
+                Can_Send(Source, Destionation - 2);
             }
             /*Send To The Normal Direction*/
             else
@@ -84,8 +84,8 @@ void Token_Task()
                 /*+2 As I Started From Source 2*/
                 if (Destionation < (Max_Nodes + 2))
                 {
-                    Can_Send(Source, Destionation);
                     led2_off();
+                    Can_Send(Source, Destionation);
                 }
                 else
                 {
@@ -97,8 +97,7 @@ void Token_Task()
             }
         }
         /*If Direction Is Changed*/
-        else if ((pui8MsgData_Recived[0] == Next_Source)
-                && ((pui8MsgData_Recived[1]) == Source))
+        else if ((pui8MsgData_Recived[0] == Next_Source) && ((pui8MsgData_Recived[1]) == Source))
         {
             /*Turn On Led That We Have Recived Token*/
             /*Change State To Normal State*/
@@ -120,7 +119,7 @@ void Token_Task()
             }
         }
         /*Todo If Ack Doens't Come From Next Node Send To The Next OF Next and So On Until Ack Recived*/
-        vTaskDelay(100);
+        vTaskDelay(1000);
     }
 
 }
