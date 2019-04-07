@@ -11,11 +11,18 @@
 /*Typedef For Node Struct*/
 typedef struct Node
 {
-    uint8_t Previous_Source;
+    uint8_t Previous_Node;
     uint8_t This_Node;
     uint8_t Destionation_Node;
+    uint8_t Dir;
 }Node_T;
 
+/*Define Directions*/
+enum Directions
+{
+    Forward,
+    Backward,
+};
 /*Definiations For Source Numbers*/
 #define SOURCE_NUM_ZERO 0
 #define SOURCE_NUM_ONE 1
@@ -37,7 +44,7 @@ typedef struct Node
 
 enum
 {
-    START_UP_STATE, NORMAL_STATE
+    START_UP_STATE, NORMAL_STATE,idle
 };
 
 /*Can Task*/
@@ -46,4 +53,6 @@ void Can_Task_Recive(void);
 /*Task To Check For Token And Set State Of System*/
 void Token_Task();
 
+/*Button Task*/
+void Button_Task(void);
 #endif /* HEADERS_CAN_TASK_H_ */
