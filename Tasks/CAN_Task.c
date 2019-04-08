@@ -12,6 +12,7 @@
 uint8_t Button0_flag = 0;
 uint8_t Token = 0;
 uint8_t Checked = 0;
+uint8_t temp;
 
 /*Variable To Handle State*/
 uint8_t State = START_UP_STATE;
@@ -21,7 +22,7 @@ uint8_t State = START_UP_STATE;
 /*4 2 3*/
 /*2 3 4*/
 /*3 4 2*/
-Node_T Node = { 2 , 3 , 2 , Forward };
+Node_T Node = { 3, 4, 2 , Forward };
 
 /*Defines Source Node ID*/
 #define First_Node 2
@@ -49,7 +50,7 @@ void Token_Task()
         if (Button0_flag == 1)
         {
             /*Send First Token To The First Node To Inailize System*/
-            Can_Send(Forward, Node.Destionation_Node, Node.This_Node);
+            Can_Send(Node.This_Node, Node.Destionation_Node, Node.This_Node);
             /*Normal State*/
             State = NORMAL_STATE;
             /*Change State To idle*/
@@ -58,7 +59,8 @@ void Token_Task()
         }
         /*Check Source Node If it Previous Or Next*/
         /*Todo*/
-        if ((pui8MsgData_Recived[0] == Forward) && (pui8MsgData_Recived[1] == Node.This_Node) && (Checked == 1))
+        if ((pui8MsgData_Recived[0] == Node.Previous_Node)
+                && (pui8MsgData_Recived[1] == Node.This_Node) && (Checked == 1))
         {
             /*Change State To Normal State*/
             State = NORMAL_STATE;
@@ -66,12 +68,15 @@ void Token_Task()
             Token = 1;
             vTaskDelay(1000);
             Token = 0;
+
             /*Send Token To The Next Node*/
-            Can_Send(Node.Dir, Node.Destionation_Node, Node.This_Node);
+            Can_Send(Node.This_Node, Node.Destionation_Node, Node.This_Node);
             Checked = 0;
         }
         /*If Direction Is Backward*/
-        else if ((pui8MsgData_Recived[0] == Backward) && ((pui8MsgData_Recived[1]) == Node.This_Node) && (Checked == 1))
+        else if ((pui8MsgData_Recived[0] == Node.Destionation_Node)
+                && ((pui8MsgData_Recived[1]) == Node.This_Node)
+                && (Checked == 1))
         {
             /*I have Recived Token*/
             Token = 1;
@@ -80,7 +85,7 @@ void Token_Task()
             vTaskDelay(1000);
             Token = 0;
             /*Try To Send Until Getting Ack*/
-            Can_Send(Node.Dir, Node.Previous_Node, Node.This_Node);
+            Can_Send(Node.This_Node, Node.Previous_Node, Node.This_Node);
             Checked = 0;
         }
         vTaskDelay(10);
@@ -121,19 +126,16 @@ void Button_Task(void)
             State = NORMAL_STATE;
             /*Set Flag For Button 0*/
             Button0_flag = 1;
+            vTaskDelay(50);
         }
         /*If Second Button Pressed Change Direction*/
         if (Switch1_Read() == 1)
         {
-            if (Node.Dir == Backward)
-            {
-                Node.Dir = Forward;
-            }
-            else if (Node.Dir == Forward)
-            {
-                Node.Dir = Backward;
-            }
+            temp = Node.Previous_Node;
+            Node.Previous_Node = Node.Destionation_Node;
+            Node.Destionation_Node = temp;
+            vTaskDelay(50);
         }
-        vTaskDelay(50);
+        vTaskDelay(5);
     }
 }
