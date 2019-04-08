@@ -19,7 +19,7 @@ uint8_t State = START_UP_STATE;
 /*8 2 3*/
 /*2 3 4*/
 /*3 4 2*/
-Node_T Node = { 3, 4, 5, Forward };
+Node_T Node = { 3 , 4 , 5 , Forward };
 
 /*Defines Source Node ID*/
 #define First_Node 2
