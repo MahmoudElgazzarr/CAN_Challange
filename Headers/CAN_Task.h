@@ -40,8 +40,6 @@ enum Directions
 
 #define PDU_MSG_ID 1
 
-#define Token 0xFF
-
 enum
 {
     START_UP_STATE, NORMAL_STATE,idle
@@ -53,6 +51,8 @@ void Can_Task_Recive(void);
 /*Task To Check For Token And Set State Of System*/
 void Token_Task();
 
+/**/
+void Led_Task(void);
 /*Button Task*/
 void Button_Task(void);
 #endif /* HEADERS_CAN_TASK_H_ */

@@ -10,28 +10,22 @@
 #include "Switch_Driver.h"
 
 uint8_t Button0_flag = 0;
+uint8_t Token = 0;
 
 /*Variable To Handle State*/
 uint8_t State = START_UP_STATE;
 
 /*Structure To Hold Source And Destionation IDS*/
 /*Previous Source Destionation*/
-/*8 2 3*/
+/*4 2 3*/
 /*2 3 4*/
 /*3 4 2*/
-Node_T Node = { 3 , 4 , 2, Forward };
+Node_T Node = { 3 , 4 , 2 , Forward };
 
 /*Defines Source Node ID*/
 #define First_Node 2
 /*Todo Change it . Defines Last Node */
 #define Last_Node 4
-/*Ack*/
-#define Ack 0x99
-
-/*Define Max Number Of Nodes*/
-#define Max_Nodes 3
-/*define Max Number OF Nodes*/
-#define Max_Number_Of_Nodes 8
 
 void Can_Task_Recive(void)
 {
@@ -51,18 +45,13 @@ void Token_Task()
 {
     while (1)
     {
-        if (State == START_UP_STATE)
-        {
-            /*Turn On Init Led*/
-            led1_on();
-        }
         /*If Switch 0 Pressed On First Node Send Token To The Next Node And Intalize Other Nodes*/
         if (Button0_flag == 1)
         {
             /*Send First Token To The First Node To Inailize System*/
             Can_Send(Forward, Node.Destionation_Node, 0x00);
-            /*Turn Off Init Led*/
-            led1_off();
+            /*Normal State*/
+            State = NORMAL_STATE;
             /*Change State To idle*/
             Button0_flag = 0;
         }
@@ -70,80 +59,57 @@ void Token_Task()
         /*Todo*/
         if ((pui8MsgData_Recived[0] == Forward) && (pui8MsgData_Recived[1] == Node.This_Node))
         {
-            /*Turn Off Led Of init State*/
-            led1_off();
-            /*Turn On Led That We Have Recived Token*/
-            led2_on();
             /*Change State To Normal State*/
             State = NORMAL_STATE;
-            /*Send Ack To The Previous*/
-            Can_Send(Node.This_Node, Node.This_Node, Ack);
-            vTaskDelay(500);
+            /*Recived Token*/
+            Token = 1;
+            vTaskDelay(1000);
             /*Send Token To The Next Node*/
             Can_Send(Node.Dir, Node.Destionation_Node, 0x00);
-
-            /*Wait To Get Ack*/
-            if ((pui8MsgData_Recived[0] == Node.Destionation_Node) && (pui8MsgData_Recived[2] == Ack))
-            {
-                led2_off();
-                vTasDelay(500);
-                Can_Send(Node.Dir, Node.Destionation_Node, 0x00);
-
-            }
-            else
-            {
-                if (Node.Destionation_Node >= Max_Number_Of_Nodes)
-                {
-                    /*Send To The Least Address Node*/
-                    /*Destionation Number Two*/
-                    Node.Destionation_Node = SOURCE_NUM_TWO;
-                }
-                else
-                {
-                    Node.Destionation_Node = Node.Destionation_Node + 1;
-                }
-            }
-            //Can_Send(Node.Dir, Node.Destionation_Node, 0x00);
-            //led2_off();
         }
         /*If Direction Is Backward*/
-        else if ((pui8MsgData_Recived[0] == Backward)
-                && ((pui8MsgData_Recived[1]) == Node.This_Node))
+        else if ((pui8MsgData_Recived[0] == Backward) && ((pui8MsgData_Recived[1]) == Node.This_Node))
         {
-            /*Turn On Led That We Have Recived Token*/
-            led2_on();
+            /*I have Recived Token*/
+            Token = 1;
             /*Change State To Normal State*/
             State = NORMAL_STATE;
-            /*Send Ack*/
-            Can_Send(Node.This_Node, Node.This_Node, Ack);
-
-            /*Wait To Get Ack*/
-            if ((pui8MsgData_Recived[0] == Node.Previous_Node) && (pui8MsgData_Recived[2] == Ack))
-            {
-                Can_Send(Node.Dir, Node.Previous_Node, 0x00);
-            }
-            else
-            {
-                /*First Node*/
-                if (Node.Previous_Node == 1)
-                {
-                    /*Send To The Least Address Node*/
-                    /*Destionation Number Two*/
-                    Node.Previous_Node = Max_Number_Of_Nodes;
-                }
-                else
-                {
-                    Node.Previous_Node = Node.Previous_Node - 1;
-                }
-            }
+            vTaskDelay(1000);
             /*Try To Send Until Getting Ack*/
             Can_Send(Node.Dir, Node.Previous_Node, 0x00);
         }
-        vTaskDelay(500);
+        else
+        {
+            Token = 0;
+        }
+        vTaskDelay(10);
     }
 
 }
-
+void Led_Task(void)
+{
+    while (1)
+    {
+        if (State == START_UP_STATE)
+        {
+            /*Turn On Init Led*/
+            led1_on();
+        }
+        else
+        {
+            led1_off();
+        }
+        if (Token == 1)
+        {
+            led2_on();
+        }
+        else
+        {
+            led2_off();
+        }
+        vTaskDelay(50);
+    }
+}
 void Button_Task(void)
 {
     while (1)

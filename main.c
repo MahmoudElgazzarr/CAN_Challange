@@ -58,6 +58,8 @@ int main(void)
     xTaskCreate(Can_Task_Recive, (const portCHAR *) "CAN Task Receive", 150,
     NULL,
                 6, NULL);
+    /*Add Task For Led*/
+    xTaskCreate(Led_Task, (const portCHAR *) "Led Task", 150, NULL, 3 ,NULL);
 
     /*Start Schedular*/
     vTaskStartScheduler();
