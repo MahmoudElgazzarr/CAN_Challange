@@ -20,8 +20,8 @@ typedef struct Node
 /*Define Directions*/
 enum Directions
 {
-    Forward,
-    Backward,
+    Forward = 21,
+    Backward = 22,
 };
 /*Definiations For Source Numbers*/
 #define SOURCE_NUM_ZERO 0

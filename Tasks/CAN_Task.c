@@ -19,7 +19,7 @@ uint8_t State = START_UP_STATE;
 /*8 2 3*/
 /*2 3 4*/
 /*3 4 2*/
-Node_T Node = { 3 , 4 , 5 , Forward };
+Node_T Node = { 3 , 4 , 2, Forward };
 
 /*Defines Source Node ID*/
 #define First_Node 2
@@ -43,7 +43,7 @@ void Can_Task_Recive(void)
             Can_Recive();
         }
 
-        vTaskDelay(10);
+        vTaskDelay(2);
     }
 }
 
@@ -76,16 +76,23 @@ void Token_Task()
             led2_on();
             /*Change State To Normal State*/
             State = NORMAL_STATE;
-            /*Send Ack*/
+            /*Send Ack To The Previous*/
             Can_Send(Node.This_Node, Node.This_Node, Ack);
-            /*delay 1 Sec*/
-            vTaskDelay(100);
+            vTaskDelay(500);
             /*Send Token To The Next Node*/
             Can_Send(Node.Dir, Node.Destionation_Node, 0x00);
+
             /*Wait To Get Ack*/
-            while ((pui8MsgData_Recived[0] == Node.Destionation_Node) && (pui8MsgData_Recived[2] != Ack))
+            if ((pui8MsgData_Recived[0] == Node.Destionation_Node) && (pui8MsgData_Recived[2] == Ack))
             {
-                if (Node.Destionation_Node == Max_Number_Of_Nodes)
+                led2_off();
+                vTasDelay(500);
+                Can_Send(Node.Dir, Node.Destionation_Node, 0x00);
+
+            }
+            else
+            {
+                if (Node.Destionation_Node >= Max_Number_Of_Nodes)
                 {
                     /*Send To The Least Address Node*/
                     /*Destionation Number Two*/
@@ -95,12 +102,13 @@ void Token_Task()
                 {
                     Node.Destionation_Node = Node.Destionation_Node + 1;
                 }
-                Can_Send(Node.Dir, Node.Destionation_Node, 0x00);
             }
-            led2_off();
+            //Can_Send(Node.Dir, Node.Destionation_Node, 0x00);
+            //led2_off();
         }
         /*If Direction Is Backward*/
-        else if ((pui8MsgData_Recived[0] == Backward) && ((pui8MsgData_Recived[1]) == Node.This_Node))
+        else if ((pui8MsgData_Recived[0] == Backward)
+                && ((pui8MsgData_Recived[1]) == Node.This_Node))
         {
             /*Turn On Led That We Have Recived Token*/
             led2_on();
@@ -108,15 +116,16 @@ void Token_Task()
             State = NORMAL_STATE;
             /*Send Ack*/
             Can_Send(Node.This_Node, Node.This_Node, Ack);
-            /*Delay*/
-            vTaskDelay(100);
-            /*Send token To The Previous Node*/
-            Can_Send(Node.Dir, Node.Previous_Node, 0x00);
+
             /*Wait To Get Ack*/
-            while ((pui8MsgData_Recived[0] == Node.Previous_Node) && (pui8MsgData_Recived[2] != Ack))
+            if ((pui8MsgData_Recived[0] == Node.Previous_Node) && (pui8MsgData_Recived[2] == Ack))
+            {
+                Can_Send(Node.Dir, Node.Previous_Node, 0x00);
+            }
+            else
             {
                 /*First Node*/
-                if (Node.Previous_Node == 1 )
+                if (Node.Previous_Node == 1)
                 {
                     /*Send To The Least Address Node*/
                     /*Destionation Number Two*/
@@ -126,11 +135,11 @@ void Token_Task()
                 {
                     Node.Previous_Node = Node.Previous_Node - 1;
                 }
-                Can_Send(Node.Dir, Node.Previous_Node, 0x00);
             }
-            led2_off();
+            /*Try To Send Until Getting Ack*/
+            Can_Send(Node.Dir, Node.Previous_Node, 0x00);
         }
-        vTaskDelay(50);
+        vTaskDelay(500);
     }
 
 }
