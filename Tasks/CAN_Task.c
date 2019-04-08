@@ -11,6 +11,7 @@
 
 uint8_t Button0_flag = 0;
 uint8_t Token = 0;
+uint8_t Checked = 0;
 
 /*Variable To Handle State*/
 uint8_t State = START_UP_STATE;
@@ -20,7 +21,7 @@ uint8_t State = START_UP_STATE;
 /*4 2 3*/
 /*2 3 4*/
 /*3 4 2*/
-Node_T Node = { 3 , 4 , 2 , Forward };
+Node_T Node = { 2 , 3 , 2 , Forward };
 
 /*Defines Source Node ID*/
 #define First_Node 2
@@ -33,11 +34,10 @@ void Can_Task_Recive(void)
     {
         if (g_bRXFlag2 == 1)
         {
-
             Can_Recive();
+            Checked = 1;
         }
-
-        vTaskDelay(2);
+        vTaskDelay(5);
     }
 }
 
@@ -49,42 +49,42 @@ void Token_Task()
         if (Button0_flag == 1)
         {
             /*Send First Token To The First Node To Inailize System*/
-            Can_Send(Forward, Node.Destionation_Node, 0x00);
+            Can_Send(Forward, Node.Destionation_Node, Node.This_Node);
             /*Normal State*/
             State = NORMAL_STATE;
             /*Change State To idle*/
             Button0_flag = 0;
+            vTaskDelay(50);
         }
         /*Check Source Node If it Previous Or Next*/
         /*Todo*/
-        if ((pui8MsgData_Recived[0] == Forward) && (pui8MsgData_Recived[1] == Node.This_Node))
+        if ((pui8MsgData_Recived[0] == Forward) && (pui8MsgData_Recived[1] == Node.This_Node) && (Checked == 1))
         {
             /*Change State To Normal State*/
             State = NORMAL_STATE;
             /*Recived Token*/
             Token = 1;
             vTaskDelay(1000);
+            Token = 0;
             /*Send Token To The Next Node*/
-            Can_Send(Node.Dir, Node.Destionation_Node, 0x00);
+            Can_Send(Node.Dir, Node.Destionation_Node, Node.This_Node);
+            Checked = 0;
         }
         /*If Direction Is Backward*/
-        else if ((pui8MsgData_Recived[0] == Backward) && ((pui8MsgData_Recived[1]) == Node.This_Node))
+        else if ((pui8MsgData_Recived[0] == Backward) && ((pui8MsgData_Recived[1]) == Node.This_Node) && (Checked == 1))
         {
             /*I have Recived Token*/
             Token = 1;
             /*Change State To Normal State*/
             State = NORMAL_STATE;
             vTaskDelay(1000);
-            /*Try To Send Until Getting Ack*/
-            Can_Send(Node.Dir, Node.Previous_Node, 0x00);
-        }
-        else
-        {
             Token = 0;
+            /*Try To Send Until Getting Ack*/
+            Can_Send(Node.Dir, Node.Previous_Node, Node.This_Node);
+            Checked = 0;
         }
         vTaskDelay(10);
     }
-
 }
 void Led_Task(void)
 {
@@ -107,7 +107,7 @@ void Led_Task(void)
         {
             led2_off();
         }
-        vTaskDelay(50);
+        vTaskDelay(10);
     }
 }
 void Button_Task(void)
