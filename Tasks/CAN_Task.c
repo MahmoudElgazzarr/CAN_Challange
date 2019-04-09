@@ -66,7 +66,7 @@ void Token_Task()
             State = NORMAL_STATE;
             /*Recived Token*/
             Token = 1;
-            vTaskDelay(1000);
+            vTaskDelay(500);
             Token = 0;
 
             /*Send Token To The Next Node*/
@@ -82,7 +82,7 @@ void Token_Task()
             Token = 1;
             /*Change State To Normal State*/
             State = NORMAL_STATE;
-            vTaskDelay(1000);
+            vTaskDelay(500);
             Token = 0;
             /*Try To Send Until Getting Ack*/
             Can_Send(Node.This_Node, Node.Previous_Node, Node.This_Node);
@@ -126,7 +126,7 @@ void Button_Task(void)
             State = NORMAL_STATE;
             /*Set Flag For Button 0*/
             Button0_flag = 1;
-            vTaskDelay(50);
+            vTaskDelay(5);
         }
         /*If Second Button Pressed Change Direction*/
         if (Switch1_Read() == 1)
@@ -134,7 +134,7 @@ void Button_Task(void)
             temp = Node.Previous_Node;
             Node.Previous_Node = Node.Destionation_Node;
             Node.Destionation_Node = temp;
-            vTaskDelay(50);
+            vTaskDelay(5);
         }
         vTaskDelay(5);
     }
